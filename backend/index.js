@@ -20,6 +20,8 @@ const storage = multer.diskStorage({
   
 const upload = multer({ storage: storage })
 
+
+
 const Disaster = require('./models/disaster')
 
 
@@ -28,6 +30,8 @@ mongoose.connect(process.env.MONGODB_URL)
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('Error connecting to MongoDB:', err));
 
+
+app.use('/uploads', express.static(__dirname + '/uploads'))
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors())
@@ -55,7 +59,31 @@ app.post('/post/disaster', upload.array('images'), async (req, res) => {
     }
 });
 
+app.get('/disasters', async (req, res) => {
+    try {
+        // Retrieve all disasters from the database
+        const disasters = await Disaster.find({});
+        res.json(disasters); // Send the retrieved disasters as JSON response
+    } catch (error) {
+        console.error('Error fetching disasters:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
+app.get('/disasters/:id', async (req, res) => {
+    try {
+        const disaster = await Disaster.findById(req.params.id);
+        
+        if (!disaster) {
+            return res.status(404).json({ message: 'Disaster not found' });
+        }
+
+        res.json(disaster);
+    } catch (error) {
+        console.error('Error fetching disaster:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
 
 
 app.listen(PORT, () => {
